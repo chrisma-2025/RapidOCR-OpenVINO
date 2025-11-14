@@ -29,6 +29,9 @@
 [简体中文](./docs/README_zh.md) | English
 </div>
 
+### About this Fork
+Add GPU device option for OpenVINO inference
+
 ### 📝 Introduction
 
 Introducing the foremost multi-platform, multi-lingual OCR tool that boasts unparalleled speed, expansive support, and complete openness. This exceptional software is entirely free and renowned for facilitating swift offline deployments.
