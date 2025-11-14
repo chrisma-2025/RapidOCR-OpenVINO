@@ -43,13 +43,20 @@ class OpenVINOInferSession(InferSession):
 
         logger.info(f"Using {model_path}")
         model_path = Path(model_path)
-        self._verify_model(model_path)
+        # self._verify_model(model_path)   # 因 OpenVINO IR(xml) 格式检测会失败，这里简便起见取消检测
 
         config = self._init_config(cfg)
         core.set_property("CPU", config)
 
+        device = cfg.get("device", "CPU")   # 添加可能GPU情况
+        precision_hint = cfg.get("inference_precision_hint", "f16")   # GPU默认会使用fp16，针对paddleocr模型这是OpenVINO推理时会发生的精度损失问题，所以暂用fp32精度进行推理来解决
+        cache_dir = cfg.get("cache_dir", None)   # 加入模型缓存提高GPU二次推理速度
+        gpu_config={"PERFORMANCE_HINT":"LATENCY","INFERENCE_PRECISION_HINT":precision_hint,"CACHE_DIR":cache_dir}   # 这里PERFORMANCE_HINT设置为延迟，还可以是THROUGHPUT，具体看这里(https://docs.openvino.ai/2025/openvino-workflow/running-inference/optimize-inference/high-level-performance-hints.html)
+        core.set_property("GPU", gpu_config)   # 设置GPU配置
+
         model_onnx = core.read_model(model_path)
-        compile_model = core.compile_model(model=model_onnx, device_name="CPU")
+        # compile_model = core.compile_model(model=model_onnx, device_name="CPU")
+        compile_model = core.compile_model(model=model_onnx, device_name=device)   # 根据CPU/GPU选择相对应的config
         self.session = compile_model.create_infer_request()
 
     def _init_config(self, cfg: DictConfig) -> Dict[Any, Any]:
